@@ -12,7 +12,7 @@ public interface PointRepository extends JpaRepository<Point, UUID> {
 	@param userId 사용자 ID
 	@return 포인트 내역 리스트
 	 */
-	List<Point> findByUesrIdOrderByEarnedAtDesc(UUID userId);
+	List<Point> findByUserIdOrderByEarnedAtDesc(UUID userId);
 
 	/*
 	특정 프로모션의 특정 사용자 포인트 조회
