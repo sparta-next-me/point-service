@@ -19,21 +19,30 @@ spring:
     username: ${RABBITMQ_USERNAME}
     password: ${RABBITMQ_PASSWORD}
 
-  management:
-    endpoints:
-      web:
-        exposure:
-          include: health,info,metrics,prometheus
-        base-path: /actuator
-    metrics:
-      tags:
-        application: ${spring.application.name}
-      export:
-        prometheus:
-          enabled: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    export:
+      prometheus:
+        enabled: true
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
 
-  springdoc:
-    api-docs:
-      path: /v3/api-docs
-    swagger-ui:
-      path: /swagger-ui.html
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
