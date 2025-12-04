@@ -1,4 +1,4 @@
-package org.nextme.point_service.point.domain;
+package org.nextme.point_service.domain;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
