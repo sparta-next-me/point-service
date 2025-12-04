@@ -1,9 +1,9 @@
-package org.nextme.point_service.presentation.dto;
+package org.nextme.point_service.point.presentation.dto;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.nextme.point_service.domain.Point;
+import org.nextme.point_service.point.domain.Point;
 
 import lombok.Builder;
 

@@ -1,11 +1,11 @@
-package org.nextme.point_service.event.consumer;
+package org.nextme.point_service.point.event.consumer;
 
 import java.util.Optional;
 
-import org.nextme.point_service.config.RabbitMQConfig;
-import org.nextme.point_service.domain.Point;
-import org.nextme.point_service.domain.PointRepository;
-import org.nextme.point_service.event.dto.PromotionWinnerEvent;
+import org.nextme.point_service.global.config.RabbitMQConfig;
+import org.nextme.point_service.point.domain.Point;
+import org.nextme.point_service.point.domain.PointRepository;
+import org.nextme.point_service.point.event.dto.PromotionWinnerEvent;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 

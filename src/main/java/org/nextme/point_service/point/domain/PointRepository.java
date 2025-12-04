@@ -1,4 +1,4 @@
-package org.nextme.point_service.domain;
+package org.nextme.point_service.point.domain;
 
 import java.util.List;
 import java.util.Optional;

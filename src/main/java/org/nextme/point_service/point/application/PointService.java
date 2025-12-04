@@ -1,14 +1,13 @@
-package org.nextme.point_service.application;
+package org.nextme.point_service.point.application;
 
 import java.util.List;
 import java.util.UUID;
 
-import org.nextme.point_service.domain.Point;
-import org.nextme.point_service.domain.PointRepository;
-import org.nextme.point_service.presentation.dto.PointHistoryResponse;
-import org.nextme.point_service.presentation.dto.PointSummaryResponse;
+import org.nextme.point_service.point.domain.Point;
+import org.nextme.point_service.point.domain.PointRepository;
+import org.nextme.point_service.point.presentation.dto.PointHistoryResponse;
+import org.nextme.point_service.point.presentation.dto.PointSummaryResponse;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 

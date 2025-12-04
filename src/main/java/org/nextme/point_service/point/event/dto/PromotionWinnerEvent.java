@@ -1,4 +1,4 @@
-package org.nextme.point_service.event.dto;
+package org.nextme.point_service.point.event.dto;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

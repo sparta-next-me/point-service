@@ -1,12 +1,12 @@
-package org.nextme.point_service.presentation;
+package org.nextme.point_service.point.presentation;
 
 import java.util.List;
 import java.util.UUID;
 
 import org.nextme.infrastructure.success.CustomResponse;
-import org.nextme.point_service.application.PointService;
-import org.nextme.point_service.presentation.dto.PointHistoryResponse;
-import org.nextme.point_service.presentation.dto.PointSummaryResponse;
+import org.nextme.point_service.point.application.PointService;
+import org.nextme.point_service.point.presentation.dto.PointHistoryResponse;
+import org.nextme.point_service.point.presentation.dto.PointSummaryResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

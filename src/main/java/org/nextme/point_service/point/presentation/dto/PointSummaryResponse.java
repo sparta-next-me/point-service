@@ -1,4 +1,4 @@
-package org.nextme.point_service.presentation.dto;
+package org.nextme.point_service.point.presentation.dto;
 
 import java.util.UUID;
 
