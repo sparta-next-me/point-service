@@ -8,6 +8,7 @@ import org.nextme.point_service.point.domain.PointRepository;
 import org.nextme.point_service.point.presentation.dto.PointHistoryResponse;
 import org.nextme.point_service.point.presentation.dto.PointSummaryResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +23,7 @@ public class PointService {
 	@param userId 사용자 ID
 	@return 포인트 내역 리스트
 	 */
+	@Transactional(readOnly = true)
 	public List<PointHistoryResponse> getPointHistory(UUID userId) {
 		List<Point> points = pointRepository.findByUserIdOrderByEarnedAtDesc(userId);
 		return points.stream()
@@ -34,6 +36,7 @@ public class PointService {
 	@param userId 사용자 ID
 	@return 총 포인트, 적립 횟수
 	 */
+	@Transactional(readOnly = true)
 	public PointSummaryResponse getPointSummary(UUID userId) {
 		List<Point> points = pointRepository.findByUserIdOrderByEarnedAtDesc(userId);
 
