@@ -28,7 +28,7 @@ public class PromotionEventConsumer {
 		try {
 			// 1. 중복 지급 방지 체크
 			Optional<Point> existing = pointRepository.findByPromotionIdAndUserId(
-				event.getPromotionId(), event.getPromotionId());
+				event.getPromotionId(), event.getUserId());
 
 			if (existing.isPresent()) {
 				log.warn("이미 포인트가 지급된 사용자입니다 : userId={}, promotionId={}",
