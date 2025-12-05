@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
 	// Promotion Service로부터 받는 이벤트
-	private static final String PROMOTION_EXCHANGE = "promotion.exchange";
+	public static final String PROMOTION_EXCHANGE = "promotion.exchange";
 	public static final String WINNER_QUEUE = "point.promotion.winner";
 	public static final String WINNER_ROUTING_KEY = "promotion.winner";
 
