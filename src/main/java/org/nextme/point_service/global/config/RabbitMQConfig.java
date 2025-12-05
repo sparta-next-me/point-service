@@ -13,15 +13,16 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-	// Exchange 이름
+	// Promotion Service로부터 받는 이벤트
 	private static final String PROMOTION_EXCHANGE = "promotion.exchange";
-
-	// Queue 이름
 	public static final String WINNER_QUEUE = "point.promotion.winner";
-
-	// Routing Key
 	public static final String WINNER_ROUTING_KEY = "promotion.winner";
 
+	// User Service로 발행하는 이벤트
+	public static final String USER_EXCHANGE = "user.exchange";
+	public static final String POINT_EARNED_ROUTING_KEY = "point.earned";
+
+	// ===== Promotion Service 관련 설정 ======
 	// 당첨자 큐 생성
 	@Bean
 	public Queue winnerQueue() {
@@ -43,6 +44,13 @@ public class RabbitMQConfig {
 			.with(WINNER_ROUTING_KEY);
 	}
 
+	// ===== User Service 관련 설정 =====
+	@Bean
+	public TopicExchange userExchange() {
+		return new TopicExchange(USER_EXCHANGE);
+	}
+
+	// ===== 공통 설정 =====
 	// JSON 메시지 컨버터
 	@Bean
 	public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
