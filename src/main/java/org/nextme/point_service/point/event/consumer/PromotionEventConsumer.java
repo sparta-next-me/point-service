@@ -9,6 +9,7 @@ import org.nextme.point_service.point.domain.PointRepository;
 import org.nextme.point_service.point.event.dto.PromotionWinnerEvent;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ public class PromotionEventConsumer {
 	private final PointRepository pointRepository;
 
 	// 당첨 이벤트 처리
+	@Transactional
 	@RabbitListener(queues = RabbitMQConfig.WINNER_QUEUE)
 	public void handleWinnerEvent(PromotionWinnerEvent event) {
 		log.info("당첨 이벤트 수신: promotionId={}, userId={}, amount={}",
