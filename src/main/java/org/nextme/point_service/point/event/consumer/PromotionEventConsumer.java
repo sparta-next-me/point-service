@@ -6,8 +6,10 @@ import org.nextme.point_service.global.config.RabbitMQConfig;
 import org.nextme.point_service.global.exception.PointErrorCode;
 import org.nextme.point_service.point.domain.Point;
 import org.nextme.point_service.point.domain.PointRepository;
+import org.nextme.point_service.point.event.dto.PointEarnedEvent;
 import org.nextme.point_service.point.event.dto.PromotionWinnerEvent;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PromotionEventConsumer {
 
 	private final PointRepository pointRepository;
+	private final RabbitTemplate rabbitTemplate;
 
 	// 당첨 이벤트 처리
 	@Transactional
@@ -60,12 +63,34 @@ public class PromotionEventConsumer {
 			log.info("포인트 지급 완료: userId={}, amount={}, promotionName={}",
 				event.getUserId(), event.getPointAmount(), event.getPromotionName());
 
+			// 5. User Service로 포인트 획득 이벤트 발행
+			publishPointEarnedEvent(point);
+
 		} catch (Exception e) {
 			log.error("포인트 지급 실패: userId={}, promotionId={}, error={}",
 				event.getUserId(), event.getPromotionId(), e.getMessage(), e);
 			// 예외를 던져서 RabbitMQ가 메시지를 재처리하도록 함
 			throw PointErrorCode.POINT_GRANT_FAILED.toException("포인트 지급 실패: " + e.getMessage());
 		}
+	}
+
+	// User Service로 포인트 획득 이벤트 발행
+	private void publishPointEarnedEvent(Point point) {
+		PointEarnedEvent earnedEvent = PointEarnedEvent.of(
+			point.getUserId(),
+			point.getAmount(),
+			point.getPromotionId(),
+			point.getPromotionName(),
+			point.getEarnedAt()
+		);
+
+		rabbitTemplate.convertAndSend(
+			RabbitMQConfig.USER_EXCHANGE,
+			RabbitMQConfig.POINT_EARNED_ROUTING_KEY,
+			earnedEvent
+		);
+
+		log.info("User Service로 포인트 획득 이벤트 발행 : userId={}, amount={}", point.getUserId(), point.getAmount());
 	}
 
 	/**
