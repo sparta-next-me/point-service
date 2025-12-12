@@ -15,7 +15,13 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        default_schema: promotionservice
+        default_schema: pointservice
+
+  flyway:
+    enabled: true
+    schemas: pointservice
+    default-schema: pointservice
+    baseline-on-migrate: true
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
