@@ -2,14 +2,14 @@ package org.nextme.point_service.point.event.consumer;
 
 import java.util.Optional;
 
-import org.nextme.point_service.global.config.RabbitMQConfig;
+import org.nextme.point_service.global.config.KafkaConfig;
 import org.nextme.point_service.global.exception.PointErrorCode;
 import org.nextme.point_service.point.domain.Point;
 import org.nextme.point_service.point.domain.PointRepository;
 import org.nextme.point_service.point.event.dto.PointEarnedEvent;
 import org.nextme.point_service.point.event.dto.PromotionWinnerEvent;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,11 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 public class PromotionEventConsumer {
 
 	private final PointRepository pointRepository;
-	private final RabbitTemplate rabbitTemplate;
+	private final KafkaTemplate<String, PointEarnedEvent> kafkaTemplate;
 
 	// 당첨 이벤트 처리
 	@Transactional
-	@RabbitListener(queues = RabbitMQConfig.WINNER_QUEUE)
+	@KafkaListener(topics = KafkaConfig.PROMOTION_WINNER_TOPIC, groupId = "point-service")
 	public void handleWinnerEvent(PromotionWinnerEvent event) {
 		log.info("당첨 이벤트 수신: promotionId={}, userId={}, amount={}",
 			event.getPromotionId(), event.getUserId(), event.getPointAmount());
@@ -84,9 +84,9 @@ public class PromotionEventConsumer {
 			point.getEarnedAt()
 		);
 
-		rabbitTemplate.convertAndSend(
-			RabbitMQConfig.USER_EXCHANGE,
-			RabbitMQConfig.POINT_EARNED_ROUTING_KEY,
+		kafkaTemplate.send(
+			KafkaConfig.USER_POINT_EARNED_TOPIC,
+			point.getUserId().toString(),
 			earnedEvent
 		);
 
