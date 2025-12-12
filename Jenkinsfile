@@ -26,7 +26,7 @@ pipeline {
         stage('Build & Test') {
             steps {
                 withCredentials([
-                    file(credentialsId: 'promotion-service', variable: 'ENV_FILE')
+                    file(credentialsId: 'promotion-env', variable: 'ENV_FILE')
                 ]) {
                     sh '''
                       # 환경 파일 존재 확인
@@ -75,7 +75,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 withCredentials([
-                    file(credentialsId: 'promotion-service', variable: 'ENV_FILE')
+                    file(credentialsId: 'promotion-env', variable: 'ENV_FILE')
                 ]) {
                     sh """
                       # 기존 컨테이너 있으면 정지/삭제
