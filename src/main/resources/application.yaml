@@ -60,3 +60,13 @@ springdoc:
 
 server:
   port: 11112
+
+eureka:
+  instance:
+    prefer-ip-address: true
+
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://34.50.7.8:3150//eureka/
