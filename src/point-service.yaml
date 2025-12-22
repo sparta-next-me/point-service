@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: point-service
+  namespace: next-me
+  labels:
+    app: point-service
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  selector:
+    matchLabels:
+      app: point-service
+  template:
+    metadata:
+      labels:
+        app: point-service
+    spec:
+      imagePullSecrets:
+        - name: ghcr-cred
+      containers:
+        - name: point-service
+          image: ghcr.io/sparta-next-me/point-service:latest
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 11112 # server.port와 일치
+
+          # Secret로 환경변수 주입 (DB_URL, DB_USERNAME, DB_PASSWORD, KAFKA_BOOTSTRAP_SERVERS, EUREKA_URL, OPENAPI_SERVICE_URL 등)
+          envFrom:
+            - secretRef:
+                name: promotion-env
+
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+
+            # Eureka 설정 (app.yml에도 있지만, 런타임 오버라이드로 확정)
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "true"
+
+            # Config Server 사용 시 (네 promotion 템플릿과 동일 방식)
+            - name: SPRING_CONFIG_IMPORT
+              value: "optional:configserver:http://config-server.next-me.svc.cluster.local:3100"
+
+            # Config Server에서 가져올 설정 파일 name (예: point-service-prod.yml)
+            - name: SPRING_CLOUD_CONFIG_NAME
+              value: "point-service"
+
+            - name: JAVA_OPTS
+              value: "-Xms512m -Xmx768m"
+
+          # Actuator base-path=/actuator, health 엔드포인트는 /actuator/health
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 11112
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 11112
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "756Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: point-service
+  namespace: next-me
+spec:
+  selector:
+    app: point-service
+  ports:
+    - name: http
+      port: 11112
+      targetPort: 11112
+  type: ClusterIP
