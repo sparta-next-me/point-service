@@ -1,6 +1,13 @@
 spring:
   application:
     name: point-service
+  config:
+    # 유레카를 거치지 않고 직접 쿠버네티스 서비스 주소로 찌름
+    import: 'optional:configserver:http://config-server.next-me.svc.cluster.local:3100'
+  cloud:
+    config:
+      discovery:
+        enabled: false
 
   datasource:
     url: ${DB_URL}
@@ -83,9 +90,6 @@ server:
 eureka:
   instance:
     prefer-ip-address: true
-
   client:
-    register-with-eureka: true
-    fetch-registry: true
     service-url:
-      defaultZone: ${EUREKA_URL}
+      defaultZone: http://eureka-server.next-me.svc.cluster.local:3151/eureka/
