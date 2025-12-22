@@ -25,9 +25,8 @@ pipeline {
 
         stage('Build & Test') {
             steps {
-                // Jenkins에 등록된 point-service 전용 Credential 사용
                 withCredentials([
-                    file(credentialsId: 'point-env', variable: 'ENV_FILE')
+                    file(credentialsId: 'promotion-env', variable: 'ENV_FILE')
                 ]) {
                     sh '''
                       set -a
@@ -62,7 +61,7 @@ pipeline {
                 // K3s 설정파일과 포인트 서비스용 .env 파일을 사용하여 배포
                 withCredentials([
                     file(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG_FILE'),
-                    file(credentialsId: 'point-env', variable: 'ENV_FILE')
+                    file(credentialsId: 'promotion-env', variable: 'ENV_FILE')
                 ]) {
                     sh '''
                       export KUBECONFIG=${KUBECONFIG_FILE}
