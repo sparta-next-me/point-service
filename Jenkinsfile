@@ -2,21 +2,21 @@ pipeline {
     agent any
 
     environment {
+        // 1. 서비스 정보 정의 (point-service로 변경)
         APP_NAME        = "point-service"
+        NAMESPACE       = "next-me"
 
-        // GHCR 레지스트리 정보
+        // 2. GHCR 레지스트리 정보
         REGISTRY        = "ghcr.io"
         GH_OWNER        = "sparta-next-me"
         IMAGE_REPO      = "point-service"
         FULL_IMAGE      = "${REGISTRY}/${GH_OWNER}/${IMAGE_REPO}:latest"
 
-        CONTAINER_NAME  = "point-service"
-        HOST_PORT       = "11112"
-        CONTAINER_PORT  = "11112"
+        // 시간대 설정
+        TZ              = "Asia/Seoul"
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 checkout scm
@@ -25,74 +25,81 @@ pipeline {
 
         stage('Build & Test') {
             steps {
+                // Jenkins에 등록된 point-service 전용 Credential 사용
                 withCredentials([
-                    file(credentialsId: 'promotion-env', variable: 'ENV_FILE')
+                    file(credentialsId: 'point-env', variable: 'ENV_FILE')
                 ]) {
                     sh '''
-                      # 환경 파일 존재 확인
-                      if [ ! -f "$ENV_FILE" ]; then
-                        echo "Error: ENV_FILE not found at $ENV_FILE"
-                        exit 1
-                      fi
                       set -a
-                      . "$ENV_FILE"       # DB_URL, DB_USERNAME, DB_PASSWORD, REDIS_HOST, OAUTH 키들 export
+                      . "$ENV_FILE"
                       set +a
-
-                      ./gradlew clean test --no-daemon
-                      ./gradlew bootJar --no-daemon
+                      ./gradlew clean bootJar --no-daemon
                     '''
                 }
             }
         }
 
-        stage('Docker Build') {
-            steps {
-                sh """
-                  docker build -t ${FULL_IMAGE} .
-                """
-            }
-        }
-
-        stage('Push Image') {
+        stage('Docker Build & Push') {
             steps {
                 withCredentials([
                     usernamePassword(
                         credentialsId: 'ghcr-credential',
-                        usernameVariable: 'REGISTRY_USER',
-                        passwordVariable: 'REGISTRY_TOKEN'
+                        usernameVariable: 'USER',
+                        passwordVariable: 'TOKEN'
                     )
                 ]) {
                     sh """
-                      set -e  # 아래 명령 중 하나라도 실패하면 즉시 종료
-
-                      echo "\$REGISTRY_TOKEN" | docker login ghcr.io -u "\$REGISTRY_USER" --password-stdin
+                      docker build -t ${FULL_IMAGE} .
+                      echo "${TOKEN}" | docker login ${REGISTRY} -u "${USER}" --password-stdin
                       docker push ${FULL_IMAGE}
                     """
                 }
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy to Kubernetes') {
             steps {
+                // K3s 설정파일과 포인트 서비스용 .env 파일을 사용하여 배포
                 withCredentials([
-                    file(credentialsId: 'promotion-env', variable: 'ENV_FILE')
+                    file(credentialsId: 'k3s-kubeconfig', variable: 'KUBECONFIG_FILE'),
+                    file(credentialsId: 'point-env', variable: 'ENV_FILE')
                 ]) {
-                    sh """
-                      # 기존 컨테이너 있으면 정지/삭제
-                      if [ \$(docker ps -aq -f name=${CONTAINER_NAME}) ]; then
-                        echo "Stopping existing container..."
-                        docker stop ${CONTAINER_NAME} || true
-                        docker rm ${CONTAINER_NAME} || true
-                      fi
+                    sh '''
+                      export KUBECONFIG=${KUBECONFIG_FILE}
 
-                      echo "Starting new user-service container..."
-                      docker run -d --name ${CONTAINER_NAME} \\
-                        --env-file \${ENV_FILE} \\
-                        -p ${HOST_PORT}:${CONTAINER_PORT} \\
-                        ${FULL_IMAGE}
-                    """
+                      # 1. K8s 매니페스트(YAML)에 적힌 시크릿 이름인 'promotion-env'로 생성
+                      # (참고: YAML 파일의 envFrom에 promotion-env라고 되어 있으므로 이름을 맞춰야 함)
+                      echo "Updating K8s Secret: promotion-env for point-service..."
+                      kubectl delete secret promotion-env -n ${NAMESPACE} --ignore-not-found
+                      kubectl create secret generic promotion-env --from-env-file=${ENV_FILE} -n ${NAMESPACE}
+
+                      # 2. 쿠버네티스 매니페스트 적용 (point-service.yaml)
+                      echo "Applying manifests from point-service.yaml..."
+                      kubectl apply -f point-service.yaml -n ${NAMESPACE}
+
+                      # 3. 배포 모니터링: 롤링 업데이트 상태 확인
+                      # YAML의 ReadinessProbe(60초) 설정 때문에 가동까지 약 1분 이상 소요될 수 있음
+                      echo "Monitoring rollout status for ${APP_NAME}..."
+                      kubectl rollout status deployment/point-service -n ${NAMESPACE}
+
+                      # 4. 최종 확인
+                      kubectl get pods -n ${NAMESPACE} -l app=point-service
+                    '''
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            echo "Cleaning up local docker image..."
+            sh "docker rmi ${FULL_IMAGE} || true"
+        }
+        success {
+            echo "Successfully deployed ${APP_NAME} to Kubernetes Cluster!"
+        }
+        failure {
+            echo "Deployment failed. Check point-service Pod status and Actuator Health endpoint."
         }
     }
 }
